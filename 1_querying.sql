@@ -1,7 +1,11 @@
 /********************* Querying ********************************/
 
+-- Running windowns shell commands from sqlite shell
 -- .shell cls;
 /*.shell clear*/;
+-- .shell cd
+-- .shell move <initial> <final>
+-- .shell copy <source> <dst>
 
 
 /*** SELECT ***/
@@ -39,6 +43,7 @@ SELECT "title", "format" FROM "longlist" WHERE NOT "format"='hardcover' LIMIT 10
 
 SELECT "title", "author" FROM "longlist" WHERE "year"=2023 OR "year"=2022 LIMIT 10;
 SELECT "title", "format" FROM "longlist" WHERE ("year"=2023 OR "year"=2022) AND (format!='hardcover') LIMIT 10;
+SELECT "title", "author", "rating" FROM "longlist" WHERE "rating"=(SELECT MAX("rating") from "longlist");
 /*******************************************/
 
 
