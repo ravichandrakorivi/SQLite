@@ -43,7 +43,6 @@ SELECT "title", "format" FROM "longlist" WHERE NOT "format"='hardcover' LIMIT 10
 
 SELECT "title", "author" FROM "longlist" WHERE "year"=2023 OR "year"=2022 LIMIT 10;
 SELECT "title", "format" FROM "longlist" WHERE ("year"=2023 OR "year"=2022) AND (format!='hardcover') LIMIT 10;
-SELECT "title", "author", "rating" FROM "longlist" WHERE "rating"=(SELECT MAX("rating") from "longlist");
 /*******************************************/
 
 
@@ -103,6 +102,9 @@ SELECT COUNT("translator") FROM "longlist";
 SELECT COUNT("publisher") FROM "longlist";
 SELECT DISTINCT("publisher") FROM "longlist";
 SELECT COUNT(DISTINCT("publisher")) FROM "longlist";
+
+
+SELECT "title", "author", "rating" FROM "longlist" WHERE "rating"=(SELECT MAX("rating") from "longlist");
 /**************************/
 
 .quit
