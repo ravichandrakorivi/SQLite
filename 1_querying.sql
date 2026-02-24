@@ -1,5 +1,8 @@
 /********************* Querying ********************************/
 
+-- Opening sqlite with database
+-- sqlite3 longlist.db
+
 -- Running windowns shell commands from sqlite shell
 -- .shell cls;
 /*.shell clear*/;
