@@ -10,6 +10,9 @@
 -- .shell move <initial> <final>
 -- .shell copy <source> <dst>
 
+-- sqlite3
+-- .open longlist.db
+
 
 /*** SELECT ***/
 -- Get the list of tables in a database
