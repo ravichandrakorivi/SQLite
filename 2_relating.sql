@@ -79,11 +79,80 @@ SELECT * FROM "sea_lions" NATURAL JOIN "migrations";
 
 
 /*************** SETS ******************/
--- sqlite3 longlist.db
+-- sqlite3 longlist_rel.db
 SELECT "name" FROM "authors";
 SELECT "name" FROM "translators";
 
 SELECT "name" FROM "translators" UNION SELECT "name" FROM "authors";
+
+-- Keeps duplicates
+SELECT "name" FROM "authors" UNION ALL SELECT "name" FROM "translators";
+
+SELECT 'author' AS "profession", "name" FROM "authors";
+SELECT 'translator' AS "profession", "name" FROM "translators";
+
+SELECT 'author' AS "profession", "name" FROM "authors" 
+UNION 
+SELECT 'translator' AS "profession", "name" FROM "translators";
+
+SELECT "name" FROM "authors" INTERSECT SELECT "name" FROM "translators";
+
+SELECT "name" FROM "authors" EXCEPT SELECT "name" FROM "translators";
+
+
+SELECT COUNT(*) FROM "authors";
+-- n(A) = 72
+
+SELECT COUNT(*) FROM "translators";
+-- n(B) = 74
+
+SELECT COUNT(*) FROM (SELECT "name" FROM "authors" INTERSECT SELECT "name" FROM "translators");
+-- n(A AND B) = 1
+
+SELECT COUNT(*) FROM (SELECT "name" FROM "authors" UNION SELECT "name" FROM "translators");
+-- n(A OR B) = 145 = n(A) + n(B) - n(A AND B)
+
+SELECT COUNT(*) FROM (SELECT "name" FROM "authors" UNION ALL SELECT "name" FROM "translators");
+-- n(A)+n(B)
+
+SELECT COUNT(*) FROM (SELECT "name" FROM "authors" EXCEPT SELECT "name" FROM "translators");
+-- n(A NOT B) = 71
+
+SELECT COUNT(*) FROM (SELECT "name" FROM "translators" EXCEPT SELECT "name" FROM "authors");
+-- n(B NOT A) = 73
+
+
+SELECT COUNT(*) FROM (
+    SELECT "name" FROM (
+        SELECT "name" FROM "authors"
+        EXCEPT
+        SELECT "name" FROM "translators"
+    )
+    UNION ALL
+    SELECT "name" FROM (
+        SELECT "name" FROM "translators"
+        EXCEPT
+        SELECT "name" FROM "authors"
+    )
+);
+-- 144
+
+
+SELECT "book_id" FROM "translated" WHERE "translator_id" = (
+    SELECT "id" FROM "translators" WHERE "name" = 'Sophie Hughes'
+);
+
+SELECT "book_id" FROM "translated" WHERE "translator_id" = (
+    SELECT "id" FROM "translators" WHERE "name" = 'Margaret Jull Costa'
+);
+
+-- Books collaborated by 'Sophie Hughes & Margeret Jull Costa'
+SELECT "book_id" FROM "translated" WHERE "translator_id" = (
+    SELECT "id" FROM "translators" WHERE "name" = 'Sophie Hughes') 
+INTERSECT 
+SELECT "book_id" FROM "translated" WHERE "translator_id" = (
+    SELECT "id" FROM "translators" WHERE "name" = 'Margaret Jull Costa'
+);
 /***********************************************************************/
 
 
