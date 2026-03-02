@@ -153,6 +153,26 @@ INTERSECT
 SELECT "book_id" FROM "translated" WHERE "translator_id" = (
     SELECT "id" FROM "translators" WHERE "name" = 'Margaret Jull Costa'
 );
+
+
+SELECT COUNT(*) FROM (SELECT * FROM (SELECT "name" FROM "authors" EXCEPT SELECT "name" FROM "translators") UNION SELECT * FROM (SELECT "name" FROM "translators" EXCEPT SELECT "name" FROM "authors"));
+
+SELECT "title" FROM "books" WHERE "id" IN (SELECT "book_id" FROM "translated" WHERE "translator_id" = (SELECT "id" FROM "translators" WHERE "name" ='Sophie Hughes'));
+
+SELECT "title" FROM "books" WHERE "id" IN (SELECT "book_id" FROM "translated" WHERE "translator_id" = (SELECT "id" FROM "translators" WHERE "name" ='Margaret Jull Costa'));
+
+
+SELECT "title" FROM "books" WHERE "id" IN (
+    SELECT "book_id" FROM "translated" WHERE "translator_id" = (
+	SELECT "id" FROM "translators" WHERE "name" ='Sophie Hughes'
+    )
+) 
+INTERSECT 
+SELECT "title" FROM "books" WHERE "id" IN (
+    SELECT "book_id" FROM "translated" WHERE "translator_id" = (
+	SELECT "id" FROM "translators" WHERE "name" ='Margaret Jull Costa'
+    )
+);
 /***********************************************************************/
 
 
