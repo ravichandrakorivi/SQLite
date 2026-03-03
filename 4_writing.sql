@@ -1,9 +1,32 @@
-.mode box
+----------------------------------------------------------------------------------------------
+-- WRITING
+----------------------------------------------------------------------------------------------
 
--- sqlite3 mfa.db
+
+/********** Storage Types ***************/
+-- INTEGER
+-- REAL
+-- TEXT
+-- BLOB
+-- NULL
+-- NUMERIC
+/*****************************************/
+
+/********** Column Constraints **********/
+-- CHECK
+-- DEFAULT
+-- NOT NULL
+-- UNIQUE
+/****************************************/
+
+-- Primary key constraint will automatically impose column constriants like "NOT NULL", "UNIQUE" on the primary key column column
+
+
+-- sqlite3 
+.open mfa.db
+.mode box
 .schema
 
-/*
 .read 4_schema.sql
 
 .mode box
@@ -35,12 +58,10 @@ INSERT INTO "collections" ("title", "accession_number", "acquired")
 VALUES
 ('Imaginative landscape', '56.496', NULL),
 ('Peonies and butterfly', '86.1899', '1906-01-01');
-*/
 
 
-/*
--- sqlite3 mfa.db
-.mode box
+DROP TABLE "collections";
+
 
 .schema
 .read 4_schema.sql
@@ -48,14 +69,13 @@ VALUES
 
 SELECT * FROM "collections";
 
-import --csv --skip 1 mfa.csv collections
+.import --csv --skip 1 4_mfa.csv collections
 
-
-DELETE FROM "collections";
 SELECT * FROM "collections";
+DELETE FROM "collections";
 
 
-# Read to a temporary table
+-- Read to a temporary table
 .import --csv 4_mfa_wo_id.csv temp
 .schema
 
@@ -76,6 +96,7 @@ VALUES
 ('Tile Lunette', '06.2437', '1906-11-08'),
 ('Statuette of a shrew', '01.105', '1901-02-11');
 
+
 -- Deleting 
 DELETE FROM "collections" WHERE "title" = 'Spring outing';
 DELETE FROM "collections" WHERE "acquired" IS NULL;
@@ -84,7 +105,7 @@ SELECT * FROM "collections";
 DELETE FROM "collections" WHERE "acquired"  < '1909-01-01';
 SELECT * FROM "collections";
 
-*/
+DROP TABLE "collections";
 
 
 -- Foreign Key Constraints
@@ -92,7 +113,6 @@ PRAGMA foreign_keys;
 PRAGMA foreign_keys = ON;
 PRAGMA foreign_keys;
 
-/*
 .open mfa_updated.db
 .mode box
 
@@ -101,9 +121,26 @@ PRAGMA foreign_keys;
 .schema
 .schema created
 
-SELECT * FROM "artists";
-SELECT * FROM "collections";
-SELECT * FROM "created";
+INSERT INTO "artists" ("id", "name")
+VALUES
+(1, 'Li Yin'),
+(2, 'Qian Weicheng'),
+(3, 'Unidentified artist'),
+(4, 'Zhou Chen');
+
+INSERT INTO "collections" ("id", "title", "accession_number", "acquired")
+VALUES 
+(1, 'Farmers working at dawn', '11.6152', '1911-08-03'),
+(2, 'Imaginative landscape', '56.496', NULL),
+(3, 'Profusion of flowers', '56.257' , '1956-04-12'),
+(4, 'Peonies and butterfly', '06.1899', '1906-01-01');
+
+INSERT INTO "created" ("artist_id", "collection_id")
+VALUES 
+(1, 2),
+(2, 3),
+(3, 1),
+(4, 4);
 
 SELECT * FROM "artists";
 SELECT * FROM "collections";
@@ -117,15 +154,13 @@ DELETE FROM "created" WHERE "artist_id" = (
 );
 DELETE FROM "artists" WHERE "name" = 'Unidentified artist';
 -- Successful
-*/
-
-i/*
-PRAGMA foreign_keys = ON;
 
 DROP TABLE "collections";
 DROP TABLE "artists";
 DROP TABLE "created";
 
+
+PRAGMA foreign_keys = ON;
 .read 4_schema_foreign_on_delete.sql
 .schema
 
@@ -150,10 +185,12 @@ VALUES
 (3, 1),
 (4, 4);
 
+
 DELETE FROM "artists" WHERE "name" = 'Unidentified artist';
 SELECT * FROM "artists";
 SELECT * FROM "created";
-*/
+
+
 
 
 -- Updating

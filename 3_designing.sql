@@ -1,128 +1,95 @@
+-------------------------------------------------------------------------------
+-- DESIGNING
+-------------------------------------------------------------------------------
+
 -- sqlite3
 .mode box
 
 -- Open longlist.db
 .open longlist.db
-
--- Check how the longlist.db database has been created
 .schema
+-- In SQLite, the .schema command is used to view the structure (schema) of database objects like tables, indexes, views, and triggers.
+-- .schema is a SQLite shell command, not standard SQL. It works inside the sqlite3 command-line interface.
 
-/*
-CREATE TABLE IF NOT EXISTS "longlist" ("isbn" TEXT, "title" TEXT, "author" TEXT, "format" TEXT, "pages" INTEGER, "publisher" TEXT, "published" TEXT, "year" INTEGER "votes" INTEGER "rating" REAL);
-*/
-
+SELECT sql FROM sqlite_master WHERE sql IS NOT NULL ORDER BY type, name;
+-- sqlite_master is a system table in SQLite that stores the schema of the database.
+-- It contains one row for each: table, index, view & trigger
+-- Structure: type (table, index, view, trigger), name, tbl_name, rootpage, sql (original CREATE statement)
 
 -- Now open longlist_rel.db
 .open longlist_rel.db
-
--- Check how the longlist_rel.db has been created
 .schema
 
-/*
-CREATE TABLE IF NOT EXISTS "authors" (
-    "id" INTEGER,
-    "name" TEXT,
-    "country" TEXT,
-    "birth" INTEGER,
-    PRIMARY KEY("id")
-);
-CREATE TABLE IF NOT EXISTS "authored" (
-    "author_id" INTEGER,
-    "book_id" INTEGER,
-    FOREIGN KEY("author_id") REFERENCES "authors"("id"),
-    FOREIGN KEY("book_id") REFERENCES "books"("id")
-);
-CREATE TABLE IF NOT EXISTS "books" (
-    "id" INTEGER,
-    "isbn" TEXT,
-    "title" TEXT,
-    "publisher_id" INTEGER,
-    "format" TEXT,
-    "pages" INTEGER,
-    "published" TEXT,
-    "year" INTEGER,
-    PRIMARY KEY("id"),
-    FOREIGN KEY("publisher_id") REFERENCES "publishers"("id")
-);
-CREATE TABLE IF NOT EXISTS "publishers" (
-    "id" INTEGER,
-    "publisher" TEXT,
-    PRIMARY KEY("id")
-);
-CREATE TABLE IF NOT EXISTS "ratings" (
-    "book_id" INTEGER,
-    "rating" INTEGER,
-    FOREIGN KEY("book_id") REFERENCES "books"("id")
-);
-CREATE TABLE IF NOT EXISTS "translators" (
-    "id" INTEGER,
-    "name" TEXT,
-    PRIMARY KEY("id")
-);
-CREATE TABLE IF NOT EXISTS "translated" (
-    "translator_id" INTEGER,
-    "book_id" INTEGER,
-    FOREIGN KEY("translator_id") REFERENCES "translators"("id"),
-    FOREIGN KEY("book_id") REFERENCES "books"("id")
-);
-*/
-
--- Schema of just the books tables
+-- show the CREATE statement used to create the table named books
 .schema "books"
-
-/*
-CREATE TABLE IF NOT EXISTS "books" (
-    "id" INTEGER,
-    "isbn" TEXT,
-    "title" TEXT,
-    "publisher_id" INTEGER,
-    "format" TEXT,
-    "pages" INTEGER,
-    "published" TEXT,
-    "year" INTEGER,
-    PRIMARY KEY("id"),
-    FOREIGN KEY("publisher_id") REFERENCES "publishers"("id")
-);
-*/
+SELECT sql FROM sqlite_master WHERE name = 'books';
 
 
-/****************** DESIGNING *********************/
--- create a brand new database
+-- create a new database
 .open mbta.db
 
 .schema
--- It will give nothing as there are no tables yet in the database
+-- It returns nothing as there are no objects yet in the database
 
 
 CREATE TABLE "riders" (
-	"id",
-	"name"
+    "id",
+    "name"
 );
-
-.schema
 
 CREATE TABLE "stations" (
-	"id",
-	"name",
-	"line"
+    "id",
+    "name",
+    "line"
 );
-.schema
 
 CREATE TABLE "visits" (
-	"rider_id",
-	"station_id"
+    "rider_id",
+    "station_id"
 );
+
 .schema
 
+SELECT * FROM "riders";
+SELECT * FROM "stations";
+SELECT * FROM "visits";
+
+DROP TABLE "riders";
+DROP TABLE "stations";
+DROP TABLE "visits";
+
+.read 3_schema_designing_v1.sql
+.schema
 
 -- Delete the tables
 DROP TABLE "riders";
 DROP TABLE "stations";
-DROP TABLE "visits"
+DROP TABLE "visits";
+
+.read 3_schema_designing_v2.sql
 .schema
 
+-- Altering
 
-.read schema.sql
+ALTER TABLE "visits" RENAME TO "swipes";
 .schema
 
+ALTER TABLE "swipes" ADD COLUMN "ttpe" TEXT;
+.schema
+
+ALTER TABLE "swipes" RENAME COLUMN "ttpe" TO "type";
+.schema
+
+ALTER TABLE "swipes" DROP COLUMN "type";
+.schema
+
+-- Delete the tables
+DROP TABLE "riders";
+DROP TABLE "stations";
+DROP TABLE "swipes";
+.schema
+SELECT sql FROM sqlite_master WHERE sql IS NOT NULL ORDER BY "type", "name";
+
+.read 3_schema_designing_v3.sql
+.schema
 
