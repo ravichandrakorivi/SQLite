@@ -1,3 +1,7 @@
+DROP TABLE "collections";
+DROP TABLE "artists";
+DROP TABLE "created";
+
 CREATE TABLE IF NOT EXISTS "collections" (
     "id" INTEGER,
     "title" TEXT NOT NULL,

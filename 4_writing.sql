@@ -59,6 +59,12 @@ VALUES
 ('Imaginative landscape', '56.496', NULL),
 ('Peonies and butterfly', '86.1899', '1906-01-01');
 
+DELETE FROM "collections" WHERE "acquired" IS NULL;
+
+INSERT INTO "collections" ("title", "accession_number")
+VALUES ('Imaginative landscape', '56.496');
+
+SELECT * FROM "collections" WHERE "acquired" IS NULL;
 
 DROP TABLE "collections";
 
@@ -306,6 +312,8 @@ VALUES ('Profusion of flowers', '56.247', '1956-04-12');
 SELECT * FROM "collections";
 SELECT * FROM "transactions";
 
+-- DROP TRIGGER "sell";
+-- DROP TRIGGER "buy";
 
 -- Soft deletion
 .schema collections

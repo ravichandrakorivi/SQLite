@@ -22,6 +22,8 @@ SELECT sql FROM sqlite_master WHERE sql IS NOT NULL ORDER BY type, name;
 
 -- show the CREATE statement used to create the table named books
 .schema "books"
+.schema books
+
 SELECT sql FROM sqlite_master WHERE name = 'books';
 
 
