@@ -200,7 +200,7 @@ SELECT * FROM "collections";
 ----------------------------------------------------------------------------------
 -------------------------------- Soft Deletion -----------------------------------
 ----------------------------------------------------------------------------------
-.read 4_schema_writing_v4.sql
+.read 4_schema_writing_v3.sql
 .schema
 
 SELECT * FROM "collections";
@@ -258,6 +258,7 @@ UPDATE "votes" SET "title" = 'IMAGINATIVE LANDSCAPE' WHERE "title" LIKE 'imag%';
 UPDATE "votes" SET "title" = 'PROFUSION OF FLOWERS' WHERE "title" LIKE 'Profusion%';
 
 SELECT "title", COUNT("title") FROM "votes" GROUP BY "title";
+
 ----------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------
 

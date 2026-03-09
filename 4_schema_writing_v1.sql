@@ -1,6 +1,9 @@
 DROP TABLE IF EXISTS "created";
 DROP TABLE IF EXISTS "artists";
 DROP TABLE IF EXISTS "collections";
+DROP TABLE IF EXISTS "transactions";
+DROP TRIGGER IF EXISTS "sell";
+DROP TRIGGER IF EXISTS "buy";
 
 CREATE TABLE "collections" (
     "id" INTEGER,
