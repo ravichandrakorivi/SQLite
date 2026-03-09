@@ -23,13 +23,16 @@
 
 
 -- sqlite3 
-.open mfa.db
+.open collections.db
 .mode box
-.schema
 
-.read 4_schema.sql
 
-.mode box
+--------------------------------------------------------------------------------------
+--------------------------------------- Insert ---------------------------------------
+--------------------------------------------------------------------------------------
+
+.read 4_schema_writing_v1.sql
+
 SELECT * FROM "collections";
 
 INSERT INTO "collections" ("id", "title", "accession_number", "acquired")
@@ -66,23 +69,29 @@ VALUES ('Imaginative landscape', '56.496');
 
 SELECT * FROM "collections" WHERE "acquired" IS NULL;
 
-DROP TABLE "collections";
+--------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------
 
 
-.schema
-.read 4_schema.sql
+
+
+--------------------------------------------------------------------------------------
+------------------------------- Importing data from csv file -------------------------
+--------------------------------------------------------------------------------------
+.read 4_schema_writing_v1.sql
 .schema
 
 SELECT * FROM "collections";
 
-.import --csv --skip 1 4_mfa.csv collections
+.import --csv --skip 1 4_collections.csv collections
 
 SELECT * FROM "collections";
 DELETE FROM "collections";
 
 
--- Read to a temporary table
-.import --csv 4_mfa_wo_id.csv temp
+
+-- Importing data from csv file without primary keys
+.import --csv 4_collections_wo_id.csv temp
 .schema
 
 SELECT * FROM temp;
@@ -92,9 +101,9 @@ SELECT "title", "accession_number", "acquired"  FROM "temp";
 
 SELECT * FROM "collections";
 
-.schema
 DROP TABLE "temp";
-.schema
+--------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------
 
 
 INSERT INTO "collections" ("title", "accession_number", "acquired")
@@ -114,43 +123,21 @@ SELECT * FROM "collections";
 DROP TABLE "collections";
 
 
--- Foreign Key Constraints
-PRAGMA foreign_keys;
-PRAGMA foreign_keys = ON;
-PRAGMA foreign_keys;
 
-.open mfa_updated.db
-.mode box
-
-.schema
-.read 4_schema_updated.sql
+----------------------------------------------------------------------------------
+----------------------------- Foreign Key Constraints ----------------------------
+----------------------------------------------------------------------------------
+.read 4_schema_writing_v2.sql
 .schema
 .schema created
 
-INSERT INTO "artists" ("id", "name")
-VALUES
-(1, 'Li Yin'),
-(2, 'Qian Weicheng'),
-(3, 'Unidentified artist'),
-(4, 'Zhou Chen');
-
-INSERT INTO "collections" ("id", "title", "accession_number", "acquired")
-VALUES 
-(1, 'Farmers working at dawn', '11.6152', '1911-08-03'),
-(2, 'Imaginative landscape', '56.496', NULL),
-(3, 'Profusion of flowers', '56.257' , '1956-04-12'),
-(4, 'Peonies and butterfly', '06.1899', '1906-01-01');
-
-INSERT INTO "created" ("artist_id", "collection_id")
-VALUES 
-(1, 2),
-(2, 3),
-(3, 1),
-(4, 4);
-
+SELECT * FROM "created";
 SELECT * FROM "artists";
 SELECT * FROM "collections";
-SELECT * FROM "created";
+
+PRAGMA foreign_keys;
+PRAGMA foreign_keys = ON;
+PRAGMA foreign_keys;
 
 DELETE FROM "artists" WHERE "name" = 'Unidentified artist';
 -- Runtime error: FOREIGN KEY constraint failed (19)
@@ -161,74 +148,36 @@ DELETE FROM "created" WHERE "artist_id" = (
 DELETE FROM "artists" WHERE "name" = 'Unidentified artist';
 -- Successful
 
-DROP TABLE "collections";
-DROP TABLE "artists";
-DROP TABLE "created";
 
 
-PRAGMA foreign_keys = ON;
-.read 4_schema_foreign_on_delete.sql
+----------------------------------------------------------------------------------
+--------------------- Foreign Key Constraints :  ON DELETE -----------------------
+----------------------------------------------------------------------------------
+.read 4_schema_writing_v3.sql
 .schema
 
-INSERT INTO "artists" ("id", "name")
-VALUES
-(1, 'Li Yin'),
-(2, 'Qian Weicheng'),
-(3, 'Unidentified artist'),
-(4, 'Zhou Chen');
-
-INSERT INTO "collections" ("id", "title", "accession_number", "acquired")
-VALUES 
-(1, 'Farmers working at dawn', '11.6152', '1911-08-03'),
-(2, 'Imaginative landscape', '56.496', NULL),
-(3, 'Profusion of flowers', '56.257' , '1956-04-12'),
-(4, 'Peonies and butterfly', '06.1899', '1906-01-01');
-
-INSERT INTO "created" ("artist_id", "collection_id")
-VALUES 
-(1, 2),
-(2, 3),
-(3, 1),
-(4, 4);
-
+SELECT * FROM "created";
+SELECT * FROM "artists";
+SELECT * FROM "collections";
 
 DELETE FROM "artists" WHERE "name" = 'Unidentified artist';
 SELECT * FROM "artists";
 SELECT * FROM "created";
+----------------------------------------------------------------------------------
+----------------------------------------------------------------------------------
 
 
 
 
--- Updating
-PRAGMA foreign_keys = ON;
-
-DROP TABLE "collections";
-DROP TABLE "created";
-DROP TABLE "artists";
-
-.read 4_schema_foreign_on_delete.sql
+----------------------------------------------------------------------------------
+--------------------------------- Updating ---------------------------------------
+----------------------------------------------------------------------------------
+.read 4_schema_writing_v3.sql
 .schema
 
-INSERT INTO "artists" ("id", "name")
-VALUES
-(1, 'Li Yin'),
-(2, 'Qian Weicheng'),
-(3, 'Unidentified artist'),
-(4, 'Zhou Chen');
-
-INSERT INTO "collections" ("id", "title", "accession_number", "acquired")
-VALUES 
-(1, 'Farmers working at dawn', '11.6152', '1911-08-03'),
-(2, 'Imaginative landscape', '56.496', NULL),
-(3, 'Profusion of flowers', '56.257' , '1956-04-12'),
-(4, 'Peonies and butterfly', '06.1899', '1906-01-01');
-
-INSERT INTO "created" ("artist_id", "collection_id")
-VALUES 
-(1, 2),
-(2, 3),
-(3, 1),
-(4, 4);
+SELECT * FROM "created";
+SELECT * FROM "artists";
+SELECT * FROM "collections";
 
 UPDATE "created" SET "artist_id" = (
     SELECT "id" FROM "artists" 
@@ -240,11 +189,49 @@ WHERE "collection_id" = (
 );
 
 SELECT * FROM "created";
+SELECT * FROM "artists";
+SELECT * FROM "collections";
+----------------------------------------------------------------------------------
+----------------------------------------------------------------------------------
 
 
 
+
+----------------------------------------------------------------------------------
+-------------------------------- Soft Deletion -----------------------------------
+----------------------------------------------------------------------------------
+.read 4_schema_writing_v4.sql
+.schema
+
+SELECT * FROM "collections";
+SELECT * FROM "artists";
+SELECT * FROM "created";
+
+ALTER TABLE "collections" ADD COLUMN "deleted" INTEGER DEFAULT 0;
+
+SELECT * FROM "collections";
+
+UPDATE "collections" SET "deleted" = 1 WHERE "title" = 'Farmers working at dawn';
+
+SELECT * FROM "collections";
+SELECT * FROM "collections" WHERE "deleted" != 1;
+SELECT * FROM "collections" WHERE "deleted" = 1;
+----------------------------------------------------------------------------------
+----------------------------------------------------------------------------------
+
+
+
+
+----------------------------------------------------------------------------------
+--------------------------------- Functions --------------------------------------
+----------------------------------------------------------------------------------
 .open votes.db
+.schema
+DROP TABLE IF EXISTS "votes";
+.schema
+
 .import --csv 4_votes.csv votes
+.schema
 SELECT * FROM "votes";
 
 SELECT "title" FROM "votes" GROUP BY "title";
@@ -271,5 +258,6 @@ UPDATE "votes" SET "title" = 'IMAGINATIVE LANDSCAPE' WHERE "title" LIKE 'imag%';
 UPDATE "votes" SET "title" = 'PROFUSION OF FLOWERS' WHERE "title" LIKE 'Profusion%';
 
 SELECT "title", COUNT("title") FROM "votes" GROUP BY "title";
-
+----------------------------------------------------------------------------------
+----------------------------------------------------------------------------------
 
