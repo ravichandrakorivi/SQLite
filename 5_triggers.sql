@@ -20,7 +20,7 @@ BEFORE DELETE ON "collections"
 FOR EACH ROW
 BEGIN
     INSERT INTO "transactions" ("title", "action")
-    VALUES (OLD."title", 'sold')
+    VALUES (OLD."title", 'sold');
 END;
 
 .schema
@@ -40,7 +40,7 @@ AFTER INSERT ON "collections"
 FOR EACH ROW
 BEGIN
     INSERT INTO "transactions" ("title", "action")
-    VALUES (NEW."title", 'bought')
+    VALUES (NEW."title", 'bought');
 END;
 
 INSERT INTO "collections" ("title", "accession_number", "acquired")
