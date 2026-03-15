@@ -191,4 +191,65 @@ VACUUM;
 -------------------------------------- Concurrency ------------------------------------------
 ---------------------------------------------------------------------------------------------
 
+----------------------- Transaction : A unit of work in a database --------------------------
+-- Properties of transactions : ACID
+  -- A : Atomicity
+  -- C : Consistency
+  -- I : Isolation
+  -- D : Durability
+
+.open bank.db
+.schema
+
+SELECT * FROM "accounts";
+
+-- Transfer 10 dollars from Alice to Bob
+UPDATE "accounts" SET "balance" = "balance" + 10 WHERE "id" = 2;
+
+-- SELECT * FROM "accounts"; # Request from other terminal
+UPDATE "accounts" SET "balance" = "balance" - 10 WHERE "id" = 1;
+
+SELECT * FROM "accounts";
+
+UPDATE "accounts" SET "balance" = "balance" - 10 WHERE "id" = 2;
+UPDATE "accounts" SET "balance" = "balance" + 10 WHERE "id" = 1;
+SELECT * FROM "accounts";
+
+BEGIN TRANSACTION;
+UPDATE "accounts" SET "balance" = "balance" + 10 WHERE "id" = 2;
+-- SELECT * FROM "accounts"; # This request from other sys will not show wrong results
+UPDATE "accounts" SET "balance" = "balance" - 10 WHERE "id" = 1;
+-- SELECT * FROM "accounts";
+COMMIT;
+
+SELECT * FROM "accounts";
+
+
+UPDATE "accounts" SET "balance" = "balance" + 10 WHERE "id" = 2;
+-- SELECT * FROM "accounts"; # Request from other computer
+UPDATE "accounts" SET "balance" = "balance" - 10 WHERE "id" = 1;
+-- Runtime error: CHECK constraint failed: balance (19)
+
+UPDATE "accounts" SET "balance" = "balance" - 10 WHERE "id" = 2;
+SELECT * FROM "accounts";
+
+BEGIN TRANSACTION;
+    UPDATE "accounts" SET "balance" = "balance" + 10 WHERE "id" = 2;
+    UPDATE "accounts" SET "balance" = "balance" - 10 WHERE "id" = 1;
+ROLLBACK;
+
+SELECT * FROM "accounts";
+
+-------------------------- Race Conditions --------------------------------
+------ Transactions have inbuilt property to ensure that transactions are 
+------ executed sequentially withoutrace conditions
+
+
+------------------------------ Locks --------------------------------------
+------ UNLOCKED, SHARED, EXCLUSIVE etc. locks
+BEGIN EXCLUSIVE TRANSACTION;
+-- SELECT * FROM "accounts"; # from other computer
+-- RUntime error: database is locked (5)
+
+
 
