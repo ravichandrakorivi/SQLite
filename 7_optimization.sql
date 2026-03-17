@@ -67,6 +67,37 @@ SELECT "title" FROM "movies" WHERE "id" IN (
 -- Run Time: real 0.022990 user 0.031250 sys 0.000000
 
 
+-- What is meant by SEARCH movies USING INTEGER PRIMARY KEY (rowid?)
+  -- SQLite is not scanning the "movies " table.
+  -- It is directly using the rowid index (very fast lookup).
+
+-- What os rowid?
+  -- When you declare a column like `id INTEGER PRIMARY KEY`,
+  -- SQLite treats this column as an alias for the internal rowid.
+  
+  -- Every SQLite table (unless created with WITHOUT ROWID) 
+  -- has a hidden column called: rowid.
+    -- It is a unique 64-bit integer.
+    -- Automatically assigned to each row
+    -- Used internally for very fast lookups
+
+-- Note that the "person_id" in "stars" & "name" in "people" are not PRIMARY KEYS.
+-- Hence, SQLite is resorting to SCANNING in both these tables;
+
+
+EXPLAIN QUERY PLAN SELECT "title" FROM "movies" WHERE "id" = 20;
+-- QUERY PLAN
+-- `--SEARCH movies USING INTEGER PRIMARY KEY (rowid=?)
+
+EXPLAIN QUERY PLAN SELECT * FROM "people" WHERE "name" = 'John Belushi';
+-- QUERY PLAN
+-- `--SCAN people
+
+EXPLAIN QUERY PLAN SELECT * FROM "people" WHERE "id" = 4;
+-- QUERY PLAN
+-- `--SEARCH people USING INTEGER PRIMARY KEY (rowid=?)
+
+
 CREATE INDEX "person_index" ON "stars" ("person_id");
 -- Run Time: real 0.576080 user 0.453125 sys 0.093750
 
@@ -91,6 +122,31 @@ SELECT "title" FROM "movies" WHERE "id" IN (
 
 ---- Covering Index : An index in which queried data can be retrieved from the index itself (without any table lookup)
 
+-- A covering index means, SQLite can answer the query using 
+-- only the index, without touching the actual table.
+
+-- Why Covering index on name_index only?
+  -- In SQLite, every index automatically stores:
+    -- The indexed column(s) (name)
+    -- The rowid of the row
+    -- And since `id INTEGER PRIMARY KEY`, id is the rowid
+    -- So the index actually contains: (name, rowid),
+    -- which is effectively: (name, id)
+
+   -- Therefore, SQLite can:
+     -- Find 'Tom Hanks' using name_index
+     -- Directly get the id (via rowid)
+     -- Never access the people table
+
+  -- For stars, index contains (person_id, rowid)
+  -- But we need "movie_id", which is not in the index
+  -- So, SQLite must go to the table to fetch it
+  
+
+EXPLAIN QUERY PLAN SELECT "id", "title" FROM "movies" WHERE "title" = 'Cars';
+-- QUERY PLAN
+-- `--SEARCH movies USING COVERING INDEX title_index (title=?)
+
 SELECT "title" FROM "movies" WHERE "id" IN (
     SELECT "movie_id" FROM "stars" WHERE "person_id" = (
         SELECT "id" FROM "people" WHERE "name" = 'Tom Hanks'
@@ -100,8 +156,16 @@ SELECT "title" FROM "movies" WHERE "id" IN (
 
 DROP INDEX "person_index";
 
-CREATE INDEX "person_index" ON "stars" ("person_id", "movie_id");
+
+-- How to make stars also use a covering index?
+-- Create a composite index like below:
+
+CREATE INDEX "person_movie_index" ON "stars" ("person_id", "movie_id");
 -- Run Time: real 0.982113 user 0.812500 sys 0.140625
+
+-- Now index contains: (person_id, movie_id, rowid)
+-- Query can be fully satisfied from index
+-- SQLite will say USING COVERING INDEX
 
 EXPLAIN QUERY PLAN
 SELECT "title" FROM "movies" WHERE "id" IN (
@@ -188,10 +252,9 @@ VACUUM;
 
 
 ---------------------------------------------------------------------------------------------
--------------------------------------- Concurrency ------------------------------------------
+----------------------- Transaction : A unit of work in a database --------------------------
 ---------------------------------------------------------------------------------------------
 
------------------------ Transaction : A unit of work in a database --------------------------
 -- Properties of transactions : ACID
   -- A : Atomicity
   -- C : Consistency
