@@ -12,13 +12,16 @@
 # -P : port number
 # -p : passowrd
 
+SHOW DATABASES;				-- There is no equivalent command for this in sqlite3
+DROP DATABASE IF EXISTS `bmrc`;		# There is no equivalent command for this in sqlite3
+
 SHOW DATABASES;
 
-CREATE DATABASE `mbta`;
+CREATE DATABASE `bmrc`;			# There is no equivalent command for this in sqlite3
 SHOW DATABASES;
 
-USE `mbta`;
-SHOW TABLES;
+USE `bmrc`;				# Similar to .open in sqlite3
+SHOW TABLES;				# Similar to .tables in sqlite3
 
 
 /********************** Integer Data types **************************/
@@ -48,8 +51,28 @@ CREATE TABLE `cards` (
     PRIMARY KEY(`id`)
 );
 
+SHOW CREATE TABLE `cards`;		# Similar to .schema "cards" in sqlite3
+
 SHOW TABLES;
 DESCRIBE `cards`;
+
+/*
+
++-------+--------------+------+-----+---------+----------------+
+| Field | Type         | Null | Key | Default | Extra          |
++-------+--------------+------+-----+---------+----------------+
+| id    | int unsigned | NO   | PRI | NULL    | auto_increment |
++-------+--------------+------+-----+---------+----------------+
+
+“Default = NULL” does NOT mean MySQL will insert NULL.
+
+ As explicit default value is not defined for the `id` column,
+ while creating the `cards` table, MySQL uses NULL in 
+ the Default column of DESCRIBE to mean:
+“No default value is specified”
+
+*/
+
 
 
 /************************************ String Data Types **************************/
@@ -112,22 +135,50 @@ CREATE TABLE `swipes` (
 SHOW TABLES;
 DESCRIBE `swipes`;
 
+/*
++------------+--------------------------------+------+-----+-------------------+-------------------+
+| Field      | Type                           | Null | Key | Default           | Extra             |
++------------+--------------------------------+------+-----+-------------------+-------------------+
+| id         | int unsigned                   | NO   | PRI | NULL              | auto_increment    |
+| card_id    | int unsigned                   | YES  | MUL | NULL              |                   |
+| station_id | int unsigned                   | YES  | MUL | NULL              |                   |
+| type       | enum('enter','exit','deposit') | NO   |     | NULL              |                   |
+| datetime   | datetime                       | NO   |     | CURRENT_TIMESTAMP | DEFAULT_GENERATED |
+| amount     | decimal(5,2)                   | NO   |     | NULL              |                   |
++------------+--------------------------------+------+-----+-------------------+-------------------+
+
+MySQL automatically creates indexes on foreign key columns. 
+That’s why you see MUL on `card_id` and `station_id`. 
+
+MUL means:
+  -- Column is indexed
+  -- But not unique
+  -- So multiple rows can have the same value
+  -- Column can appear multiple times in the index
+  -- Hence, lookup will be faster when searched using foreign key defined columns
+*/
+
 system cls
 \! cls
 
 
 /******************************** Alter Tables *********************************/
+SHOW CREATE TABLE `stations`;
+
 ALTER TABLE `stations` MODIFY `line` ENUM('blue', 'green', 'orange', 'red', 'silver') NOT NULL;
 
+# There is no equivalent command for this in SQLite.
+
+SHOW CREATE TABLE `stations`;
 DESCRIBE `stations`;
 
 
-/******************************* Stored Procedures *****************************/
+/****************************************************************************************/
 
-CREATE DATABASE `mfa`;
+CREATE DATABASE `collections`;
 SHOW DATABASES;
 
-USE `mfa`;
+USE `collections`;
 SHOW TABLES;
 
 CREATE TABLE `collections` (
@@ -149,6 +200,29 @@ VALUES
 ('Profusion of flowers', '56.257', '1956-04-12'),
 ('Spring outing', '14.76', '1914-01-08');
 
+SELECT * FROM `collections`;
+SELECT `id`, `title`, `acquired` FROM `collections`;
+SELECT `id`, `title`, `acquired` FROM `collections` WHERE `acquired` < '1947-08-15';
+SELECT `id`, `title`, `acquired` FROM `collections` WHERE `accession_number` LIKE '56%';
+SELECT `id`, `title`, `acquired` FROM `collections` WHERE `accession_number` LIKE '56%' AND `acquired` IS NOT NULL;
+SELECT `id`, `title`, `acquired` FROM `collections` WHERE `accession_number` LIKE '56%' AND `acquired` IS NULL;
+SELECT `id`, `title`, `acquired` FROM `collections` WHERE (`accession_number` LIKE '56%' AND `acquired` IS NULL) OR (`title` LIKE '%work%');
+
+
+
+
+/******************************* Stored Procedures *****************************/
+
+/*
+mysql> CREATE PROCEDURE `current_collection`() BEGIN
+    -> SELECT `title`, `accession_number`, `acquired`
+    -> FROM `collections` WHERE `deleted`=0;
+ERROR 1064 (42000): You have an error in your SQL syntax; 
+check the manual that corresponds to your MySQL server version
+for the right syntax to use near '' at line 3
+*/
+
+
 delimiter //
 
 CREATE PROCEDURE `current_collection`()
@@ -159,9 +233,12 @@ END//
 
 delimiter ;
 
-SHOW CREATE PROCEDURE `current_collection`;
+
+SHOW CREATE PROCEDURE `current_collection`;		# Similar to .schema `current_collection` in sqlite3
 
 CALL `current_collection`();
+
+
 
 UPDATE `collections` SET `deleted` = 1 WHERE `title` = 'Farmers working at dawn';
 
@@ -179,13 +256,9 @@ SHOW TABLES;
 
 delimiter //
 
-CREATE PROCEDURE `sell` (IN `sold_id` INT)
-BEGIN
-UPDATE `collections` SET `deleted` = 1
-WHERE `id` = `sold_id`;
-
-INSERT INTO `transactions` (`title`, `action`)
-VALUES ((SELECT `title` FROM `collections` WHERE `id` = `sold_id`), 'sold');
+CREATE PROCEDURE `sell` (IN `sold_id` INT) BEGIN
+    UPDATE `collections` SET `deleted` = 1 WHERE `id` = `sold_id`;
+    INSERT INTO `transactions` (`title`, `action`) VALUES ((SELECT `title` FROM `collections` WHERE `id` = `sold_id`), 'sold');
 END//
 
 delimiter ;
@@ -196,6 +269,115 @@ CALL `sell`(2);
 
 SELECT * FROM `collections`;
 SELECT * FROM `transactions`;
+
+
+
+---- Simple procedure that returns rows
+delimiter //
+
+CREATE PROCEDURE `get_active_collections`()
+BEGIN
+    SELECT `id`, `title`, `accession_number`, `acquired`
+    FROM `collections`
+    WHERE `deleted` = 0;
+END //
+
+delimiter ;
+
+CALL `get_active_collections`();
+
+
+
+---- Procedure with input parameter
+delimiter //
+
+CREATE PROCEDURE `get_by_accession_prefix`(IN `prefix` VARCHAR(10))
+BEGIN
+    SELECT `id`, `title`, `accession_number`, `acquired`
+    FROM `collections`
+    WHERE `accession_number` LIKE CONCAT(`prefix`, '%')
+      AND `deleted` = 0;
+END //
+
+delimiter ;
+
+CALL get_by_accession_prefix('56');
+
+
+---- Procedure returning a single value (using OUT parameter)
+delimiter //
+
+CREATE PROCEDURE `count_active`(OUT `total` INT)
+BEGIN
+    SELECT COUNT(*) INTO `total`
+    FROM `collections`
+    WHERE `deleted` = 0;
+END //
+delimiter ;
+
+SHOW PROCEDURE STATUS WHERE Db = DATABASE();
+
+
+
+---- IF condition
+delimiter //
+
+CREATE PROCEDURE `check_collection`(IN `cid` INT)
+BEGIN
+    DECLARE `status_msg` VARCHAR(50);
+
+    IF (SELECT `deleted` FROM `collections` WHERE `id` = cid) = 0 THEN
+        SET `status_msg` = 'Active';
+    ELSE
+        SET `status_msg` = 'Deleted';
+    END IF;
+
+    SELECT `status_msg`;
+END //
+
+delimiter ;
+
+CALL check_collection(3);
+
+
+
+---- IF…ELSEIF…ELSE
+delimiter //
+
+CREATE PROCEDURE `check_year`(IN `cid` INT)
+BEGIN
+    DECLARE `y` INT;
+
+    SELECT YEAR(`acquired`) INTO `y` FROM `collections` WHERE `id` = cid;
+
+    IF `y` < 1920 THEN
+        SELECT 'Very Old';
+    ELSEIF `y` < 2000 THEN
+        SELECT 'Old';
+    ELSE
+        SELECT 'Modern';
+    END IF;
+END //
+
+delimiter ;
+
+CALL `check_year`(3);
+
+
+---- WHILE loop
+delimiter //
+
+CREATE PROCEDURE `print_numbers`(IN `n` INT)
+BEGIN
+    DECLARE `i` INT DEFAULT 1;
+
+    WHILE i <= n DO
+        SELECT i;
+        SET i = i + 1;
+    END WHILE;
+END //
+
+delimiter ;
 
 
 /*********************************** PostgreSQL ***************************************/

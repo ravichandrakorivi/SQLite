@@ -210,3 +210,35 @@ VALUES ('Imaginativeee landscapeee', '56.496666', NULL);
 SELECT * FROM "collections";
 SELECT * FROM "current_collections";
 
+
+
+--------------------------------- Recursive CTE ----------------------------
+WITH RECURSIVE "numbers" AS (
+    SELECT 1 AS "n" 
+    UNION ALL 
+    SELECT "n"+1 FROM "numbers" WHERE "n" < 5
+) SELECT * FROM "numbers";
+
+
+WITH RECURSIVE "numbers"("n") AS (
+    SELECT 1
+    UNION ALL
+    SELECT "n" + 1 FROM "numbers" WHERE "n" < 5
+) SELECT * FROM "numbers";
+
+WITH RECURSIVE "numbers"("n") AS (
+    SELECT 1
+    UNION ALL
+    SELECT "n" + 1 FROM "numbers" WHERE "n" < 5
+) SELECT "n" FROM "numbers";
+
+WITH RECURSIVE numbers(n) AS (
+    SELECT 1
+    UNION ALL
+    SELECT n + 1 FROM numbers WHERE n < 5
+)
+SELECT a.n
+FROM numbers a
+JOIN numbers b ON b.n <= a.n
+ORDER BY a.n;
+
